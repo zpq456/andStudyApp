@@ -10,11 +10,13 @@ public class Crime {
     private UUID mId;
     private String mTitle;
     Date mDate;//범죄가 발생한 날자
+    Date mTime;//범죄 발생 시간
     private boolean mSolved;//범죄가 해결되었는지 확인
 
     public Crime(){
         mId = UUID.randomUUID();
         mDate = new Date();
+        mTime = new Date();
     }
 
     //getter & setter
@@ -32,6 +34,12 @@ public class Crime {
     }
     public void setDate(Date mDate) {
         this.mDate = mDate;
+    }
+    public Date getTime() {
+        return mTime;
+    }
+    public void setTime(Date mTime) {
+        this.mTime = mTime;
     }
     public boolean isSolved() {
         return mSolved;

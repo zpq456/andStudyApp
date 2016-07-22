@@ -11,6 +11,7 @@ import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.DatePicker;
+import android.widget.TimePicker;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -25,6 +26,7 @@ public class  DatePickerFragment extends DialogFragment {
             "com.bignerdranch.android.criminalintent.date";
 
     private DatePicker mDatePicker;
+    private TimePicker mTimePicker;
     private  static final String ARG_DATE = "date";
 
     public static DatePickerFragment newInstance(Date date){
