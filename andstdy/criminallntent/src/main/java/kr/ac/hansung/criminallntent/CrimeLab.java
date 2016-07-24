@@ -1,11 +1,17 @@
 package kr.ac.hansung.criminallntent;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import kr.ac.hansung.criminallntent.database.CrimeBaseHelper;
+import kr.ac.hansung.criminallntent.database.CrimeCursorWrapper;
+import kr.ac.hansung.criminallntent.database.CrimeDbSchema.CrimeTable;
 /**
  * Created by Owner on 2016-07-14.
  */
@@ -14,7 +20,8 @@ import java.util.UUID;
 public class CrimeLab {
     private static CrimeLab sCrimeLab; // s == static이란 뜻이다.
 
-    private List<Crime> mCrimes; // Crime을 값으로 가지는 Arr
+    private Context mContext;
+    private SQLiteDatabase mDatabase;
 
     public static CrimeLab get(Context context){
         if(sCrimeLab==null){
@@ -24,23 +31,88 @@ public class CrimeLab {
     }
 
     private CrimeLab(Context context){
-        mCrimes = new ArrayList<>();
-        for(int i=0;i<100;i++){
-            Crime crime = new Crime();
-            crime.setTitle("범죄 #"+i);
-            crime.setSolved(i%2 == 0);//짝수번째 요소는 true로 임의 설정 test용
-            mCrimes.add(crime); // 리스트에 crime을 삽입
-        }
+        mContext = context.getApplicationContext();
+        mDatabase = new CrimeBaseHelper(mContext)
+                .getWritableDatabase();
+
     }
+
+    public void addCrime(Crime c){
+        ContentValues values = getContentValues(c);
+        mDatabase.insert(CrimeTable.NAME, null, values);
+    }
+    
+    public void deleteCrime(Crime c){
+        //// TODO: 2016-07-24 데이터 삭제하기
+    }
+
     public List<Crime> getCrimes(){
-        return mCrimes;
-    }
-    public Crime getCrime(UUID id){
-        for(Crime crime : mCrimes){
-            if(crime.getId().equals(id)){
-                return crime;
+        List<Crime> crimes = new ArrayList<>();
+
+        CrimeCursorWrapper cursor = queryCrimes(null,null);
+
+        try{
+            cursor.moveToFirst();//커서 이동 방식
+            while (!cursor.isAfterLast()){//추가하고 다음으로 넘어감
+                crimes.add(cursor.getCrime());
+                cursor.moveToNext();
             }
         }
-        return null;
+        finally {
+            cursor.close();
+        }
+        return crimes;
     }
+    public Crime getCrime(UUID id){
+        CrimeCursorWrapper cursor = queryCrimes(
+                CrimeTable.Cols.UUID + " = ?",
+                new String[] {id.toString()}
+        );
+        try{
+            if(cursor.getCount() == 0){
+                return null;
+            }
+            cursor.moveToFirst();
+            return cursor.getCrime();
+        }
+        finally {
+            cursor.close();
+        }
+    }
+
+
+    public void updateCrime(Crime crime){
+        String uuidString = crime.getId().toString();
+        ContentValues values = getContentValues(crime);
+
+        mDatabase.update(CrimeTable.NAME, values,
+                CrimeTable.Cols.UUID + " = ?", //?을 사용하는것이 옳고 안전하다
+                new String[] { uuidString });
+    }
+
+    private static ContentValues getContentValues(Crime crime){
+        ContentValues values = new ContentValues();
+        values.put(CrimeTable.Cols.UUID, crime.getId().toString());
+        values.put(CrimeTable.Cols.TITLE, crime.getTitle());
+        values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
+        values.put(CrimeTable.Cols.TIME, crime.getTime().getTime());
+        values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+
+        return values;
+    }
+
+    private CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs){
+        Cursor cursor = mDatabase.query(
+                CrimeTable.NAME,
+                null,// null인 경우 테이블의 모든 열을 의미
+                whereClause,
+                whereArgs,
+                null,//SQL Select 명령문의 groupBy
+                null,//SQL Select 명령문의 having
+                null//SQL Select 명령문의 orderBy
+        );
+        return new CrimeCursorWrapper(cursor); // cursor는 쿼리된 결과 데이터를 가져오는 데 사용된다.
+    }
+    
+    
 }

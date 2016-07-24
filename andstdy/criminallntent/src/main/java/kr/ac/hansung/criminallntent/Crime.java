@@ -14,11 +14,14 @@ public class Crime {
     private boolean mSolved;//범죄가 해결되었는지 확인
 
     public Crime(){
-        mId = UUID.randomUUID();
+        this(UUID.randomUUID());
+    }
+
+    public Crime(UUID id){
+        mId = id;
         mDate = new Date();
         mTime = new Date();
     }
-
     //getter & setter
     public UUID getId() {
         return mId;
