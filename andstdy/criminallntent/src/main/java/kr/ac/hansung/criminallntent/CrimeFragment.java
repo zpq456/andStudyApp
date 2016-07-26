@@ -58,10 +58,11 @@ public class CrimeFragment extends Fragment{
     public boolean onOptionsItemSelected(MenuItem item){
         switch (item.getItemId()){
             case R.id.menu_item_delete_crime:
-                Crime crime = new Crime();
-                CrimeLab.get(getActivity()).deleteCrime(crime);
+                    CrimeLab.get(getActivity()).deleteCrime(mCrime);
 
-                return true;
+                    Intent intent = new Intent(getActivity(),CrimeListActivity.class);
+                    startActivity(intent);
+                    return true;
                 //TODO Crime 삭세조치
             default:
                 return super.onOptionsItemSelected(item);
@@ -185,5 +186,27 @@ public class CrimeFragment extends Fragment{
     private void updateDate() {
         String text = android.text.format.DateFormat.format("EEEE, MMM dd, yyyy",mCrime.getDate().getTime()).toString();
         mDateButton.setText(text);
+    }
+
+    private String getCrimeReport() {
+        String solvedString = null;
+        if (mCrime.isSolved()){
+            solvedString = getString(R.string.crime_report_solved);
+        }else{
+            solvedString = getString(R.string.crime_report_unsolved);
+        }
+        String dateFormat = "EEE, MMM DD";
+        //String dateString = DateFormat.format(dateFormat, mCrime.getDate()).toString();
+
+        String suspect = mCrime.getSuspect();
+        if(suspect == null){
+            suspect = getString(R.string.crime_report_no_suspect);
+        }else{
+            suspect = getString(R.string.crime_report_suspect, suspect);
+        }
+
+//        String report = getString(R.string.crime_report,
+//                mCrime.getTitle(), dateString, solvedString, suspect);
+        return null;// report;
     }
 }

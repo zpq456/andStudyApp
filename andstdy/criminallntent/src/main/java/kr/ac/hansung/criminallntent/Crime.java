@@ -12,6 +12,7 @@ public class Crime {
     Date mDate;//범죄가 발생한 날자
     Date mTime;//범죄 발생 시간
     private boolean mSolved;//범죄가 해결되었는지 확인
+    private String mSuspect;
 
     public Crime(){
         this(UUID.randomUUID());
@@ -49,5 +50,11 @@ public class Crime {
     }
     public void setSolved(boolean mSolved) {
         this.mSolved = mSolved;
+    }
+    public String getSuspect() {
+        return mSuspect;
+    }
+    public void setSuspect(String mSuspect) {
+        this.mSuspect = mSuspect;
     }
 }

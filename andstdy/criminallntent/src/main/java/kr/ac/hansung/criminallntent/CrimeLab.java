@@ -42,8 +42,12 @@ public class CrimeLab {
         mDatabase.insert(CrimeTable.NAME, null, values);
     }
     
-    public void deleteCrime(Crime c){
-        //// TODO: 2016-07-24 데이터 삭제하기
+    public void deleteCrime(Crime crime){
+        String uuidString = crime.getId().toString();//삭제할 항목을 가져옴
+
+        mDatabase.delete(CrimeTable.NAME,
+                CrimeTable.Cols.UUID + " = ?",
+                new String[] { uuidString } );
     }
 
     public List<Crime> getCrimes(){
@@ -56,7 +60,7 @@ public class CrimeLab {
             while (!cursor.isAfterLast()){//추가하고 다음으로 넘어감
                 crimes.add(cursor.getCrime());
                 cursor.moveToNext();
-            }
+        }
         }
         finally {
             cursor.close();
@@ -97,6 +101,7 @@ public class CrimeLab {
         values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
         values.put(CrimeTable.Cols.TIME, crime.getTime().getTime());
         values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+        values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
 
         return values;
     }
