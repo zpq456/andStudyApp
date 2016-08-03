@@ -1,6 +1,6 @@
 package kr.ac.hansung.criminallntent;
 
-import android.content.Intent;
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -26,6 +26,18 @@ public class CrimeListFragment extends Fragment {
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
     private boolean mSubtitleVisible; // 서브타이틀 가시성 정보 보존용
+    private Callbacks mCallbacks;
+
+    //호스팅 액티비티에서 구현할 필요가 있는 인터페이스
+    public interface Callbacks{
+        void onCrimeSelected(Crime crime);
+    }
+
+    @Override
+    public void onAttach(Activity activity){
+        super.onAttach(activity);
+        mCallbacks = (Callbacks) activity;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -47,6 +59,7 @@ public class CrimeListFragment extends Fragment {
             mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
         }
         updateUI();
+
         return view;
     }
 
@@ -83,9 +96,8 @@ public class CrimeListFragment extends Fragment {
             case R.id.menu_item_new_crime: // 툴바의 +버튼을 누르면
                 Crime crime = new Crime();
                 CrimeLab.get(getActivity()).addCrime(crime);
-                Intent intent = CrimePagerActivity
-                        .newIntent(getActivity(), crime.getId());
-                startActivity(intent);
+                updateUI();
+                mCallbacks.onCrimeSelected(crime);
                 return true;
             case R.id.menu_item_show_subtitle:
                 mSubtitleVisible = !mSubtitleVisible;
@@ -112,7 +124,7 @@ public class CrimeListFragment extends Fragment {
         activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
-    private void updateUI(){
+    public void updateUI(){
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
 
@@ -149,8 +161,7 @@ public class CrimeListFragment extends Fragment {
 
         @Override
         public void onClick(View v){
-            Intent intent = CrimePagerActivity.newIntent(getActivity(),mCrime.getId());
-            startActivity(intent);
+            mCallbacks.onCrimeSelected(mCrime);
         }
     }
 
@@ -182,5 +193,10 @@ public class CrimeListFragment extends Fragment {
         public void setmCrimes(List<Crime> crimes){ // 리스트를 받아와서 최신화
             mCrimes = crimes;
         }
+    }
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
     }
 }

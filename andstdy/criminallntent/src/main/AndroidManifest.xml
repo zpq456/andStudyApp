@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="kr.ac.hansung.criminallntent">
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="18"/>
+    <uses-feature android:name="android.hardware.camera"
+        android:required="false"/>
 
     <application
         android:allowBackup="true"

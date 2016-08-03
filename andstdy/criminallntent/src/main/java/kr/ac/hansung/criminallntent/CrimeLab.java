@@ -4,7 +4,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Environment;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -47,7 +49,7 @@ public class CrimeLab {
 
         mDatabase.delete(CrimeTable.NAME,
                 CrimeTable.Cols.UUID + " = ?",
-                new String[] { uuidString } );
+                new String[]{uuidString});
     }
 
     public List<Crime> getCrimes(){
@@ -118,6 +120,15 @@ public class CrimeLab {
         );
         return new CrimeCursorWrapper(cursor); // cursor는 쿼리된 결과 데이터를 가져오는 데 사용된다.
     }
-    
+
+    public File getPhotoFile(Crime crime){//올바른 위치를 가리키는 File객체를 반환
+        File externalFilesDir = mContext
+                .getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+        if(externalFilesDir == null){
+            return null;
+        }
+        return new File(externalFilesDir, crime.getPhotoFilename());
+    }
     
 }

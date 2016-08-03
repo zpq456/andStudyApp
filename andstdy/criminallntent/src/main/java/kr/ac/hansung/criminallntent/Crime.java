@@ -57,4 +57,8 @@ public class Crime {
     public void setSuspect(String mSuspect) {
         this.mSuspect = mSuspect;
     }
+
+    public String getPhotoFilename(){//파일 이름 얻기
+        return "IMG_" + getId().toString() + ".jpg";
+    }
 }

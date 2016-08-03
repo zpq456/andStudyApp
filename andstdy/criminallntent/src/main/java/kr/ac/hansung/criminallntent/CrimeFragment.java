@@ -5,9 +5,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
@@ -23,7 +25,10 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 
+import java.io.File;
 import java.util.Date;
 import java.util.UUID;
 
@@ -37,15 +42,25 @@ public class CrimeFragment extends Fragment{
 
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
-    private static final int REQUSET_CONTACT = 2;
+    private static final int REQUEST_CONTACT = 2;
+    private static final int REQUEST_PHOTO = 3;
 
     private Crime mCrime;
+    private File mPhotoFile;
     private EditText mTitleField;
     private Button mDateButton;
     private Button mTimeButton;
     private CheckBox mSolvedCheckBox;
     private Button mReportButton;
     private Button mSuspectButton;
+    private ImageView mPhotoView;
+    private ImageButton mPhotoButton;
+    private Callbacks mCallbacks;
+
+    //호스팅 액티비티에서 구현할 필요가 있는 인터페이스
+    public interface Callbacks{
+        void onCrimeUpdated(Crime crime);
+    }
 
     public static CrimeFragment newInstance(UUID crimeId){
         Bundle args = new Bundle();
@@ -67,11 +82,10 @@ public class CrimeFragment extends Fragment{
         switch (item.getItemId()){
             case R.id.menu_item_delete_crime:
                     CrimeLab.get(getActivity()).deleteCrime(mCrime);
-
-                    Intent intent = new Intent(getActivity(),CrimeListActivity.class);
-                    startActivity(intent);
+                    getActivity().finish();
+                    //Intent intent = new Intent(getActivity(),CrimeListActivity.class);
+                    //startActivity(intent);
                     return true;
-                //TODO Crime 삭세조치
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -83,6 +97,7 @@ public class CrimeFragment extends Fragment{
         setHasOptionsMenu(true);
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime); //사진 파일 위치 저장
     }
 
     @Override
@@ -107,6 +122,7 @@ public class CrimeFragment extends Fragment{
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 mCrime.setTitle(s.toString());
+                updateCrime();
             }
             @Override
             public void afterTextChanged(Editable s) {
@@ -161,6 +177,7 @@ public class CrimeFragment extends Fragment{
             @Override // 버튼이 눌리면 해결 속성 값을 바꿔준다.
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mCrime.setSolved(isChecked);
+                updateCrime();
             }
         });
 
@@ -183,7 +200,7 @@ public class CrimeFragment extends Fragment{
         mSuspectButton = (Button) v.findViewById(R.id.crime_suspect);
         mSuspectButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                startActivityForResult(pickContact,REQUSET_CONTACT);
+                startActivityForResult(pickContact,REQUEST_CONTACT);
             }
         });
 
@@ -199,6 +216,28 @@ public class CrimeFragment extends Fragment{
             mSuspectButton.setEnabled(false);
         }
 
+        mPhotoButton = (ImageButton) v.findViewById(R.id.crime_camera);
+
+        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        boolean canTakePhoto = mPhotoFile != null &&
+                captureImage.resolveActivity(packageManager) != null;
+        mPhotoButton.setEnabled(canTakePhoto);
+
+        if(canTakePhoto){
+            Uri uri = Uri.fromFile(mPhotoFile);
+            captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        }
+
+        mPhotoButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+            }
+        });
+
+        mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
+        updatePhotoView();
         return v;
     }
 
@@ -211,9 +250,17 @@ public class CrimeFragment extends Fragment{
             Date date = (Date) data
                     .getSerializableExtra(DatePickerFragment.EXTRA_DATE);
             mCrime.setDate(date);
+            updateCrime();
             updateDate();
         }//연락처에서 이름 추출하기
-        else if(requestCode == REQUSET_CONTACT && data != null){
+        else if(requestCode == REQUEST_TIME){
+            Date time = (Date) data
+                    .getSerializableExtra(TimePickerFragment.EXTRA_DATE);
+            mCrime.setTime(time);
+            updateCrime();
+            updateTime();
+        }
+        else if(requestCode == REQUEST_CONTACT && data != null){
             Uri contactUri = data.getData();
             //값을 반환할 쿼리 필드를 지정
             String[] queryFields = new String[]{
@@ -228,20 +275,22 @@ public class CrimeFragment extends Fragment{
                 c.moveToFirst();
                 String suspect = c.getString(0);
                 mCrime.setSuspect(suspect);
+                updateCrime();
                 mSuspectButton.setText(suspect);
             }finally {
                 c.close();
             }
         }
-
-        if(requestCode == REQUEST_TIME){
-            Date time = (Date) data
-                    .getSerializableExtra(TimePickerFragment.EXTRA_DATE);
-            mCrime.setTime(time);
-            updateTime();
+        else if(requestCode == REQUEST_PHOTO){
+            updateCrime();
+            updatePhotoView();
         }
     }
 
+    private void updateCrime(){
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        mCallbacks.onCrimeUpdated(mCrime);
+    }
     private void updateTime() {
         String text = android.text.format.DateFormat.format("h:mm aa",mCrime.getTime().getTime()).toString();
         mTimeButton.setText(text);
@@ -275,5 +324,27 @@ public class CrimeFragment extends Fragment{
         String report = getString(R.string.crime_report,
                 mCrime.getTitle(), dateString, timeString, solvedString, suspect);
         return report;
+    }
+
+    public void updatePhotoView(){
+        if(mPhotoFile == null || !mPhotoFile.exists()){
+            mPhotoView.setImageDrawable(null);
+        }else{
+            Bitmap bitmap = PictureUtils.getScaledBitmap(
+                    mPhotoFile.getPath(), getActivity());
+            mPhotoView.setImageBitmap(bitmap);
+        }
+    }
+
+    @Override
+    public void onAttach(Activity activity){
+        super.onAttach(activity);
+        mCallbacks = (Callbacks) activity;
+    }
+
+    @Override
+    public void onDetach(){
+        super.onDetach();
+        mCallbacks = null;
     }
 }

@@ -1,6 +1,7 @@
 package kr.ac.hansung.criminallntent;
 
 import android.os.Bundle;
+import android.support.annotation.LayoutRes;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
@@ -11,11 +12,15 @@ import android.support.v7.app.AppCompatActivity;
 public abstract class SingleFragmentActivity extends AppCompatActivity{
 
     protected abstract Fragment createFragment();
-    
+
+    @LayoutRes
+    protected int getLayoutResId(){
+        return R.layout.activity_fragment;
+    }
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_fragment);
+        setContentView(getLayoutResId());
 
         FragmentManager fm = getSupportFragmentManager();//프래그먼트 매니져 받기
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);//프레그먼트 매니져를 통해서 컨테이너를 가리킴
