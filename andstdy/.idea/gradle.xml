@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/beatbox" />
             <option value="$PROJECT_DIR$/criminallntent" />
+            <option value="$PROJECT_DIR$/nerdlauncher" />
           </set>
         </option>
       </GradleProjectSettings>
